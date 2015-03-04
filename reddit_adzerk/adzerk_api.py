@@ -54,9 +54,12 @@ class Base(object):
     _fields = FieldSet()
 
     @classmethod
-    def _headers(cls):
-        return {'X-Adzerk-ApiKey': g.secrets['az_selfserve_key'],
+    def _headers(cls, content='urlencoded'):
+        if content == 'urlencoded':
+            return {'X-Adzerk-ApiKey': g.secrets['az_selfserve_key'],
                 'Content-Type': 'application/x-www-form-urlencoded'}
+        else:
+            return {'X-Adzerk-ApiKey': g.secrets['az_selfserve_key']}
 
     def __init__(self, Id, _is_response=False, **attr):
         self.Id = Id
@@ -322,6 +325,14 @@ class Creative(Base):
         items = content.get('items')
         if items:
             return [cls._from_item(item) for item in items]
+
+    @classmethod
+    def upload(cls, Id, image):
+        url = '/'.join([cls._base_url, cls._name, str(Id), 'upload'])
+        response = requests.post(url,
+            headers=cls._headers(content=None), files=image)
+        item = handle_response(response)
+        return cls._from_item(item)
 
     def __repr__(self):
         return '<Creative %s>' % (self.Id)
